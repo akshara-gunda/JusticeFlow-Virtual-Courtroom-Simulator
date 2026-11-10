@@ -1,0 +1,279 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>JusticeFlow Web</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+</head>
+<body>
+  <div class="page-shell">
+    <header class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow">&#9878; Courtroom Intelligence Dashboard</p>
+        <h1>JusticeFlow - Virtual Courtroom Simulator</h1>
+        <p class="hero-subtitle">
+          Conduct hearings, inspect scheduling flow, analyze memory evidence, and compare courtroom strategies from one premium bench.
+        </p>
+      </div>
+      <div class="hero-badge">
+        <span>&#129497;&#8205;&#9878;</span>
+        <strong>Session Ready</strong>
+      </div>
+    </header>
+
+    <main class="dashboard">
+      <section class="dashboard-column dashboard-column-left">
+        <section class="card">
+          <div class="section-heading">
+            <h2>&#9878; Case Intake</h2>
+            <span>Register new matters</span>
+          </div>
+          <div class="grid-2">
+            <label>Case ID <input id="case-id" type="text" placeholder="C1" /></label>
+            <label>Arrival Time <input id="arrival-time" type="number" step="0.1" value="0" /></label>
+            <label>Duration <input id="duration" type="number" step="0.1" value="5" /></label>
+            <label>Priority <input id="priority" type="number" value="0" /></label>
+          </div>
+          <button id="add-case-btn" class="action-btn">Add Case to Docket</button>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <h2>&#128220; Case Register</h2>
+            <span>Active courtroom queue</span>
+          </div>
+          <table id="case-table">
+            <thead>
+              <tr>
+                <th>Case ID</th>
+                <th>Arrival</th>
+                <th>Duration</th>
+                <th>Priority</th>
+                <th>Action</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <h2>&#129497;&#8205;&#9878; Court Proceedings</h2>
+            <span>Choose hearing strategy</span>
+          </div>
+          <div class="grid-2">
+            <label>
+              Case Handling Strategy
+              <select id="schedule-algo">
+                <option value="fcfs">FCFS</option>
+                <option value="sjf">SJF</option>
+                <option value="srtf">SRTF</option>
+                <option value="rr">Round Robin</option>
+                <option value="priority">Priority</option>
+              </select>
+            </label>
+            <label>
+              Quantum (Round Robin)
+              <input id="quantum" type="number" value="2" min="1" />
+            </label>
+          </div>
+          <div class="selection-pill" id="schedule-selection-pill">Active Strategy: FCFS</div>
+          <div class="button-row">
+            <button id="start-hearing-btn" class="action-btn">Start Hearing</button>
+            <button id="run-comparison-btn" class="action-btn action-btn-secondary">Run Comparison</button>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="section-heading">
+            <h2>&#129504; Memory Chamber</h2>
+            <span>Inspect page replacement rulings</span>
+          </div>
+          <div class="grid-2">
+            <label>
+              Memory Algorithm
+              <select id="memory-algo">
+                <option value="fifo">FIFO</option>
+                <option value="lru">LRU</option>
+                <option value="optimal">Optimal</option>
+              </select>
+            </label>
+            <label>
+              Frames
+              <input id="frame-count" type="number" value="3" min="1" max="32" step="1" />
+            </label>
+          </div>
+          <label>
+            Page Reference String (comma-separated)
+            <input id="reference-input" type="text" value="7, 0, 1, 2, 0, 3, 0, 4, 2, 3" placeholder="7, 0, 1, 2, 0, 3, 0, 4, 2, 3" />
+          </label>
+          <div id="memory-input-error" class="memory-input-error" role="alert" aria-live="polite"></div>
+          <div class="selection-pill" id="memory-selection-pill">Active Memory Rule: FIFO</div>
+          <div class="button-row">
+            <button id="run-memory-btn" class="action-btn">Run Memory</button>
+            <button id="compare-memory-btn" class="action-btn action-btn-secondary">Compare Memory Algorithms</button>
+          </div>
+        </section>
+      </section>
+
+      <section class="dashboard-column dashboard-column-right">
+        <section class="card judge-card">
+          <div class="section-heading">
+            <h2>&#128104;&#8205;&#9878; Judge Status</h2>
+            <span>CPU bench representation</span>
+          </div>
+          <div class="judge-status-panel">
+            <div class="judge-orb" id="judge-orb"></div>
+            <div class="judge-copy">
+              <strong id="judge-status-title">Court is awaiting session</strong>
+              <p id="judge-status-text">Select a proceeding, evidence view, or comparison mode to begin.</p>
+            </div>
+          </div>
+        </section>
+
+        <section class="card visual-card">
+          <div class="section-heading">
+            <h2>View Chamber</h2>
+            <span>One focused courtroom view at a time</span>
+          </div>
+
+          <div class="view-tabs" id="view-tabs">
+            <button class="view-tab is-active" data-view="gantt" type="button">Proceedings Timeline</button>
+            <button class="view-tab" data-view="memory" type="button">Memory Chamber</button>
+            <button class="view-tab" data-view="comparison" type="button">Comparison Mode</button>
+          </div>
+
+          <div class="view-stage">
+            <section class="view-panel is-active" id="view-gantt" data-view-panel="gantt">
+              <div class="section-heading section-heading-tight">
+                <h2>&#9201; Gantt Proceedings</h2>
+                <span>Timeline of courtroom execution</span>
+              </div>
+              <div class="simulation-toolbar" aria-label="Simulation controls">
+                <div class="simulation-buttons">
+                  <button id="simulation-play" class="action-btn" type="button" disabled>Play</button>
+                  <button id="simulation-pause" class="action-btn action-btn-secondary" type="button" disabled>Pause</button>
+                  <button id="simulation-resume" class="action-btn action-btn-secondary" type="button" disabled>Resume</button>
+                  <button id="simulation-reset" class="action-btn action-btn-secondary" type="button" disabled>Reset</button>
+                </div>
+                <span id="simulation-status" class="simulation-status" data-state="idle">Awaiting schedule</span>
+                <label class="speed-control">
+                  Speed
+                  <select id="simulation-speed" disabled>
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                  </select>
+                </label>
+              </div>
+              <div class="simulation-readout" aria-live="polite">
+                <div class="simulation-stat simulation-clock">
+                  <span>Simulation Time</span>
+                  <strong id="simulation-time">0.00</strong>
+                </div>
+                <div class="simulation-stat">
+                  <span>Executing on CPU</span>
+                  <strong id="simulation-current" class="simulation-current">
+                    <span class="current-case-mark" aria-hidden="true"></span>
+                    <span id="simulation-current-name">Idle</span>
+                  </strong>
+                </div>
+                <div class="simulation-stat">
+                  <span>Ready Queue</span>
+                  <div id="simulation-ready" class="simulation-case-list">-</div>
+                </div>
+                <div class="simulation-stat">
+                  <span>Completed Cases</span>
+                  <div id="simulation-completed" class="simulation-case-list">-</div>
+                </div>
+              </div>
+              <div id="ganttChart" class="visual-surface">Hearing timeline will appear here.</div>
+            </section>
+
+            <section class="view-panel memory-view-panel" id="view-memory" data-view-panel="memory">
+              <div class="section-heading section-heading-tight">
+                <h2>&#128450;&#65039; Memory Chamber</h2>
+                <span>Page replacement proceedings</span>
+              </div>
+              <div class="memory-toolbar" aria-label="Memory simulation controls">
+                <div class="memory-control-buttons">
+                  <button id="memory-play" class="action-btn" type="button" disabled>Play</button>
+                  <button id="memory-pause" class="action-btn action-btn-secondary" type="button" disabled>Pause</button>
+                  <button id="memory-resume" class="action-btn action-btn-secondary" type="button" disabled>Resume</button>
+                  <button id="memory-reset" class="action-btn action-btn-secondary" type="button" disabled>Reset</button>
+                  <button id="memory-next-step" class="action-btn action-btn-secondary" type="button" disabled>Next Step</button>
+                </div>
+                <span id="memory-playback-status" class="simulation-status" data-state="idle">Awaiting simulation</span>
+                <label class="speed-control">
+                  Speed
+                  <select id="memory-speed" disabled>
+                    <option value="0.5">0.5x</option>
+                    <option value="1" selected>1x</option>
+                    <option value="2">2x</option>
+                    <option value="4">4x</option>
+                  </select>
+                </label>
+              </div>
+              <div class="memory-stats" aria-live="polite">
+                <div class="memory-stat"><span>Step</span><strong id="memory-step-count">0 / 0</strong></div>
+                <div class="memory-stat"><span>Current Page</span><strong id="memory-current-page">-</strong></div>
+                <div class="memory-stat"><span>Page Hits</span><strong id="memory-page-hits">0</strong></div>
+                <div class="memory-stat"><span>Page Faults</span><strong id="memory-page-faults">0</strong></div>
+                <div class="memory-stat"><span>Fault Rate</span><strong id="memory-fault-rate">0%</strong></div>
+                <div class="memory-stat"><span>Remaining</span><strong id="memory-remaining">0</strong></div>
+              </div>
+              <div id="memoryGrid" class="visual-surface memory-frame-surface">Memory frames will appear here.</div>
+              <section class="memory-history-panel" aria-label="Memory frame history">
+                <div class="section-heading section-heading-tight">
+                  <h3>Page and Frame History</h3>
+                  <span>Complete simulation trace</span>
+                </div>
+                <div id="memory-history-graph" class="memory-history-graph"></div>
+              </section>
+              <section class="memory-log-panel" aria-label="Memory execution log">
+                <div class="section-heading section-heading-tight">
+                  <h3>Execution Log</h3>
+                  <span>Actual page decisions</span>
+                </div>
+                <div id="memory-event-log" class="memory-event-log" aria-live="polite">
+                  <p class="memory-log-empty">Run a memory simulation to see each page decision.</p>
+                </div>
+              </section>
+            </section>
+
+            <section class="view-panel" id="view-comparison" data-view-panel="comparison">
+              <div class="section-heading section-heading-tight">
+                <h2>&#9878; Comparison Mode</h2>
+                <span>Multi-algorithm courtroom review</span>
+              </div>
+              <div id="comparisonGrid" class="comparison-grid visual-surface">Comparison results will appear here.</div>
+            </section>
+          </div>
+        </section>
+      </section>
+
+      <section class="card card-wide results-card">
+        <div class="section-heading">
+          <h2>&#128202; Judgment Metrics</h2>
+          <span>Clear verdict summary</span>
+        </div>
+        <div id="metricsPanel" class="metrics-grid">
+          <article class="metric-card">
+            <span class="metric-label">Status</span>
+            <strong class="metric-value">Awaiting simulation</strong>
+          </article>
+        </div>
+        <div id="case-metrics" class="case-metrics-wrap"></div>
+        <div id="output-box" class="output-box">Results will appear here...</div>
+        <div id="memory-comparison-panel" class="memory-comparison-panel" style="margin-top: 14px;">
+          Memory comparison results will appear here.
+        </div>
+      </section>
+    </main>
+  </div>
+
+  <script src="{{ url_for('static', filename='script.js') }}"></script>
+</body>
+</html>
